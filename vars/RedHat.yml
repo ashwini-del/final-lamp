@@ -1,0 +1,23 @@
+---
+#variable for Redhat family
+    apache_repo_url: "http://httpd.apache.org/repos/dist/release"
+    apache_repo_dist: "2.4.39"
+    apache_repo_components: "main"
+    apache_repo_name: "Apache"
+    apache_repo_desc: "Apache Repository"
+    apache_version: "2.4.39"
+    mysql_repo_url: "https://repo.mysql.com/apt"
+    mysql_repo_dist: "mysql-apt-config_0.8.15-1_all.deb"
+    mysql_repo_components: ""
+    mysql_repo_name: "MySQL"
+    mysql_repo_desc: "MySQL Repository"
+    mysql_version: "8.0"
+    php_repo_url: "https://dl.fedoraproject.org/pub/epel/7/x86_64/"
+    php_repo_dist: "epel-release-7-11.noarch.rpm"
+    php_repo_components: ""
+    php_repo_name: "PHP"
+    php_repo_desc: "PHP Repository"
+    php_version: "7.3"
+
+
+

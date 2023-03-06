@@ -1,0 +1,199 @@
+#check if httpd installed
+    - name: Check if httpd is installed
+      command: which httpd
+      register: httpd_check
+      ignore_errors: true
+      failed_when: "'Failed' in httpd_check.stderr"
+    - name: show if httpd alreday exist
+      debug:
+        var: httpd_check.stdout
+      when: httpd_check.rc == 0
+# check version of existing httpd
+    - name: Check version of existing httpd
+      command: httpd -v
+      ignore_errors: true
+      changed_when: false
+      register: httpd_present
+#display the version of existing version
+    - name: Display httpd version
+      debug:
+        msg: httpd Version is "{{ httpd_present.stdout }}"
+      when: httpd_check.rc == 0
+# New httpd installation started 
+#installing httpd on Debian
+    - name: "Print execution results "
+      debug:
+        msg:  HTTPD Installation - started"
+      when: "httpd_check.rc != 0"
+#httpd installation
+    - name: Install httpd
+      yum: name=httpd state=present
+      when: "httpd_check.rc != 0"
+
+# show installation messaged
+    - name: "Print execution results"
+      debug:
+        msg:  httpd Installation - Successful"
+    # check version of newly installed apache2
+    - name: Checking httpd version
+      command: httpd -v
+      ignore_errors: true
+      changed_when: false
+      register: new_httpd_installed
+  #show newly installd httpd version
+    - name: Display httpd version
+      debug:
+        msg: httpd Version is "{{ new_httpd_installed.stdout }}"
+      when: new_httpd_installed.rc == 0
+
+    - name: Install firewalld on RedHat
+      yum: 
+        name: firewalld
+        state: present
+      when: install_firewall == 'yes'
+    
+    - name: Enable the Service on RedHat
+      systemd:
+        name: firewalld
+        enabled: yes 
+    - name: Start firewalld  RedHat
+      service: 
+        name: firewalld
+        state: started
+
+    - name: Configuring firewall for httpd on RedHat
+      firewalld:
+        port: 80/tcp
+        zone: public
+        permanent: yes
+        immediate: yes
+        state: enabled
+
+# Ensure httpd service is runningss
+    - name: Ensure httpd service is running
+      service:
+        name: httpd
+        state: started
+  # check if httpd service is active
+    - name: Check if httpd is running
+      command: systemctl is-active httpd
+      ignore_errors: true
+      changed_when: false
+      register: httpd_status
+# disply status of httpd service
+    - name: status of service
+      debug:
+        var: httpd_status.stdout
+  # print Apache HTTPd logs
+    - name: Print HTTPD logsc
+      shell: journalctl -u httpd --no-pager
+      when: httpd_status.stdout == "active"
+      register: httpd_logs
+      changed_when: false
+#print Apache HTTPd logs
+    - name: Display logs
+      debug:
+        var: httpd_logs.stdout
+#print log if httpd not active
+    - name: Print error message
+      debug:
+        msg: "httpd service is inactive. Logs cannot be printed."
+      when: httpd_status.stdout != 'active'
+#php installation
+    - name: Check PHP version
+      command: php -v
+      register: php_version_output
+      # ignore_errors: true
+      failed_when: "'Failed' in httpd_check.stderr"
+    - name: Display if php already exist
+      debug:
+        msg: "php is alreday exist"
+      when: php_version_output.rc == 0
+    - name: Display if php not exist
+      debug:
+        msg: "php is not exist"
+      when: php_version_output.rc != 0
+    - name: "Print execution results "
+      debug:
+        msg:  PHP Installation - started"
+      when: "php_version_output.rc != 0"
+    - name: Install PHP
+      yum:
+        name: php
+        state: present
+      when: php_version_output.rc != 0
+    - name: Checking php version
+      command: php --version
+      ignore_errors: true
+      changed_when: false
+      register: new_php
+    - name: "Print execution results"
+      debug:
+        msg:  php Installation - Successful"
+      when: new_php.rc == 0
+    - name: Display php version
+      debug:
+        msg: PHP Version is "{{ new_php.stdout }}"
+      when: new_php.rc == 0
+    - name: Sets Up PHP Info Page on RedHat 
+      template:
+        src: info.php.j2
+        dest: "/var/www/html/info.php"
+# installation mysql
+    - name: Check version of existing httpd
+      command: mysql --version
+      ignore_errors: true
+      changed_when: false
+      register: mysql_present
+      failed_when: "'Failed' in httpd_check.stderr"
+    - name: "Print execution results"
+      debug:
+        msg: MySQL  Installation - Started"
+      when: mysql_present.rc != 0
+    - name: install and Configure Database on  RedHat
+      yum: 
+        name: mariadb-server
+        state: present
+      when: mysql_present.rc != 0
+    #start and enbled database service
+    - name: Start Database on RedHat
+      service: 
+        name: mariadb
+        state: started
+      when: mysql_present.rc != 0
+    - name: Enable Database for RedHat
+      systemd:
+        name: mariadb
+        enabled: yes
+      when: mysql_present.rc != 0
+
+    - name: Install python-pip
+      package:
+        name: python-pip
+        state: present
+    # use python pip need for  below module pymysql
+    - name: Install PyMySQL library
+      pip:
+        name: PyMySQL
+    - name: Set MySQL root password
+      mysql_user:
+        name: "{{ mysql_user }}"
+        password: "{{ mysql_password }}"
+        login_unix_socket: /var/lib/mysql/mysql.sock
+        host_all: yes
+        check_implicit_admin: yes
+        state: present
+      ignore_errors: true
+    - name: Checking mysql version
+      command: mysql --version
+      ignore_errors: true
+      changed_when: false
+      register: mysql_installed
+    - name: "Print execution results"
+      debug:
+        msg:  MySQL Installation - Successful"
+      when: mysql_installed.rc == 0
+    - name: Display MySQL version
+      debug:
+        msg: MySQL Version is "{{ mysql_installed.stdout }}"
+      when: mysql_installed.rc == 0
